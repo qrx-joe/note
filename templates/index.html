@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的备忘录</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 我的备忘录</h1>
+            <p>记录生活中的点点滴滴</p>
+        </header>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="add-memo">
+            <h2>添加新备忘录</h2>
+            <form method="POST" action="{{ url_for('add_memo') }}">
+                <div class="form-group">
+                    <label for="title">标题:</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="content">内容:</label>
+                    <textarea id="content" name="content" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">添加备忘录</button>
+            </form>
+        </div>
+
+        <div class="memos-list">
+            <h2>备忘录列表</h2>
+            {% if memos %}
+                <div class="memos-grid">
+                    {% for memo in memos %}
+                        <div class="memo-card">
+                            <div class="memo-header">
+                                <h3>{{ memo.title }}</h3>
+                                <div class="memo-actions">
+                                    <a href="{{ url_for('edit_memo', memo_id=memo.id) }}" class="btn btn-sm btn-edit">编辑</a>
+                                    <a href="{{ url_for('delete_memo', memo_id=memo.id) }}" class="btn btn-sm btn-delete" onclick="return confirm('确定要删除这个备忘录吗？')">删除</a>
+                                </div>
+                            </div>
+                            <div class="memo-content">
+                                <p>{{ memo.content }}</p>
+                            </div>
+                            <div class="memo-footer">
+                                <small>创建时间: {{ memo.created_at }}</small>
+                                {% if memo.updated_at != memo.created_at %}
+                                    <small>更新时间: {{ memo.updated_at }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>还没有备忘录，快来添加第一个吧！</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
