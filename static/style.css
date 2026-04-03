@@ -245,6 +245,133 @@ header p {
     justify-content: flex-start;
 }
 
+.search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.search-form input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.search-form input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.search-form .btn {
+    padding: 12px 20px;
+    white-space: nowrap;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.pagination a {
+    padding: 8px 16px;
+    background: #667eea;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.pagination a:hover {
+    background: #764ba2;
+}
+
+.pagination span {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* 标签样式 */
+.tags-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.tags-filter span {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.tags-filter .tag {
+    padding: 4px 12px;
+    background: #e9ecef;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.tags-filter .tag:hover {
+    background: #667eea;
+    color: white;
+}
+
+.tags-filter .tag.active {
+    background: #667eea;
+    color: white;
+}
+
+.memo-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.memo-tags .tag {
+    padding: 2px 8px;
+    background: #e9ecef;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: #495057;
+}
+
+.pin-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #ffc107;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #212529;
+    margin-right: 8px;
+}
+
+.memo-card.pinned {
+    border: 2px solid #ffc107;
+}
+
+.btn-pin {
+    background: #6c757d;
+    color: white;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+.btn-pin:hover {
+    background: #5a6268;
+}
+
 @media (max-width: 768px) {
     .container {
         margin: 10px;

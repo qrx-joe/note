@@ -34,21 +34,60 @@
                     <label for="content">内容:</label>
                     <textarea id="content" name="content" rows="4" required></textarea>
                 </div>
+                <div class="form-group">
+                    <label for="tags">标签 (用逗号分隔):</label>
+                    <input type="text" id="tags" name="tags" placeholder="工作, 生活, 学习">
+                </div>
                 <button type="submit" class="btn btn-primary">添加备忘录</button>
             </form>
         </div>
 
         <div class="memos-list">
             <h2>备忘录列表</h2>
+
+            <form method="GET" action="{{ url_for('index') }}" class="search-form">
+                <input type="text" name="q" placeholder="搜索备忘录..." value="{{ search_query }}">
+                <button type="submit" class="btn">搜索</button>
+                {% if search_query or current_tag %}
+                    <a href="{{ url_for('index') }}" class="btn">清除</a>
+                {% endif %}
+            </form>
+
+            {% if all_tags %}
+            <div class="tags-filter">
+                <span>标签:</span>
+                {% for t in all_tags %}
+                    <a href="{{ url_for('index') }}?tag={{ t }}{% if search_query %}&q={{ search_query }}{% endif %}" class="tag{% if t == current_tag %} active{% endif %}">{{ t }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             {% if memos %}
                 <div class="memos-grid">
                     {% for memo in memos %}
-                        <div class="memo-card">
+                        <div class="memo-card{% if memo.pinned %} pinned{% endif %}">
+                            {% if memo.tags %}
+                            <div class="memo-tags">
+                                {% for tag in memo.tags %}
+                                    <span class="tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                             <div class="memo-header">
+                                {% if memo.pinned %}
+                                <span class="pin-badge">置顶</span>
+                                {% endif %}
                                 <h3>{{ memo.title }}</h3>
                                 <div class="memo-actions">
+                                    <form method="POST" action="{{ url_for('pin_memo', memo_id=memo.id) }}" style="display:inline">
+                                        <button type="submit" class="btn btn-sm btn-pin" title="{% if memo.pinned %}取消置顶{% else %}置顶{% endif %}">
+                                            {% if memo.pinned %}📌{% else %}📍{% endif %}
+                                        </button>
+                                    </form>
                                     <a href="{{ url_for('edit_memo', memo_id=memo.id) }}" class="btn btn-sm btn-edit">编辑</a>
-                                    <a href="{{ url_for('delete_memo', memo_id=memo.id) }}" class="btn btn-sm btn-delete" onclick="return confirm('确定要删除这个备忘录吗？')">删除</a>
+                                    <form method="POST" action="{{ url_for('delete_memo', memo_id=memo.id) }}" style="display:inline">
+                                        <button type="submit" class="btn btn-sm btn-delete" onclick="return confirm('确定要删除这个备忘录吗？')">删除</button>
+                                    </form>
                                 </div>
                             </div>
                             <div class="memo-content">
@@ -63,6 +102,18 @@
                         </div>
                     {% endfor %}
                 </div>
+
+                {% if has_prev or has_next %}
+                <div class="pagination">
+                    {% if has_prev %}
+                        <a href="{{ url_for('index') }}?page={{ page-1 }}{% if search_query %}&q={{ search_query }}{% endif %}">上一页</a>
+                    {% endif %}
+                    <span>第 {{ page }} 页</span>
+                    {% if has_next %}
+                        <a href="{{ url_for('index') }}?page={{ page+1 }}{% if search_query %}&q={{ search_query }}{% endif %}">下一页</a>
+                    {% endif %}
+                </div>
+                {% endif %}
             {% else %}
                 <div class="empty-state">
                     <p>还没有备忘录，快来添加第一个吧！</p>
