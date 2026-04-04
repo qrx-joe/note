@@ -1,13 +1,28 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_wtf.csrf import CSRFProtect
 import json
 import os
 import uuid
-import msvcrt
 import shutil
+import portalocker
+import logging
 from datetime import datetime
 
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log', encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
+
+# 环境变量控制 debug 模式
+app.debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
 
 # 安全地生成 secret_key
 SECRET_KEY_FILE = '.secret_key'
@@ -26,32 +41,41 @@ DATA_FILE = 'memos.json'
 BACKUP_FILE = 'memos.json.bak'
 LOCK_FILE = 'memos.lock'
 
+# 输入限制常量
+MAX_TITLE = 200
+MAX_CONTENT = 50000
+
 def backup_data():
     if os.path.exists(DATA_FILE):
         shutil.copy2(DATA_FILE, BACKUP_FILE)
 
 def load_memos():
     if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        try:
+            with open(DATA_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            # JSON 损坏，加载备份
+            print(f"数据文件损坏: {e}")
+            if os.path.exists(BACKUP_FILE):
+                try:
+                    with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
+                        return json.load(f)
+                except (json.JSONDecodeError, IOError):
+                    print(f"备份文件也损坏")
     return []
 
 def save_memos(memos):
     # 先备份
     backup_data()
-    # 获取文件锁 (Windows)
-    lock_fd = None
+    # 跨平台文件锁
     try:
-        lock_fd = open(LOCK_FILE, 'w')
-        msvcrt.locking(lock_fd.fileno(), msvcrt.LK_LOCK, 1)
-        try:
+        with portalocker.Lock(LOCK_FILE, 'w', timeout=5) as lock_fd:
             with open(DATA_FILE, 'w', encoding='utf-8') as f:
                 json.dump(memos, f, ensure_ascii=False, indent=2)
-        finally:
-            msvcrt.locking(lock_fd.fileno(), msvcrt.LK_UNLCK, 1)
-    finally:
-        if lock_fd:
-            lock_fd.close()
+    except portalocker.LockException as e:
+        print(f"保存文件失败: {e}")
+        raise
 
 @app.route('/')
 def index():
@@ -91,9 +115,17 @@ def index():
 def add_memo():
     title = request.form.get('title', '').strip()
     content = request.form.get('content', '').strip()
-    
+
     if not title or not content:
         flash('标题和内容都不能为空！')
+        return redirect(url_for('index'))
+
+    if len(title) > MAX_TITLE:
+        flash(f'标题不能超过{MAX_TITLE}字符！')
+        return redirect(url_for('index'))
+
+    if len(content) > MAX_CONTENT:
+        flash(f'内容不能超过{MAX_CONTENT}字符！')
         return redirect(url_for('index'))
     
     tags_raw = request.form.get('tags', '').strip()
@@ -134,6 +166,14 @@ def edit_memo(memo_id):
             flash('标题和内容都不能为空！')
             return redirect(url_for('edit_memo', memo_id=memo_id))
 
+        if len(title) > MAX_TITLE:
+            flash(f'标题不能超过{MAX_TITLE}字符！')
+            return redirect(url_for('edit_memo', memo_id=memo_id))
+
+        if len(content) > MAX_CONTENT:
+            flash(f'内容不能超过{MAX_CONTENT}字符！')
+            return redirect(url_for('edit_memo', memo_id=memo_id))
+
         memo['title'] = title
         memo['content'] = content
         memo['tags'] = tags
@@ -162,5 +202,22 @@ def pin_memo(memo_id):
         save_memos(memos)
     return redirect(url_for('index'))
 
+@app.route('/health')
+def health_check():
+    """健康检查端点"""
+    # 检查数据文件
+    data_ok = os.path.exists(DATA_FILE)
+    backup_ok = os.path.exists(BACKUP_FILE)
+
+    status = 'healthy' if data_ok else 'degraded'
+    return jsonify({
+        'status': status,
+        'data_file': data_ok,
+        'backup_file': backup_ok
+    }), 200 if data_ok else 503
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    port = int(os.environ.get('PORT', 5000))
+    logger.info(f"启动应用: debug={debug}, port={port}")
+    app.run(host='0.0.0.0', port=port, debug=debug)
