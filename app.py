@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_wtf.csrf import CSRFProtect
 import json
 import os
 import uuid
@@ -17,6 +18,9 @@ else:
     app.secret_key = os.urandom(32)
     with open(SECRET_KEY_FILE, 'wb') as f:
         f.write(app.secret_key)
+
+# 初始化 CSRF 保护
+csrf = CSRFProtect(app)
 
 DATA_FILE = 'memos.json'
 BACKUP_FILE = 'memos.json.bak'
