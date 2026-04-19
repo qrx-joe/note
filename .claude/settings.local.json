@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(uv venv:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(cmd *)",
+      "Bash(netstat -ano)"
     ],
     "deny": []
   }
