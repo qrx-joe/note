@@ -50,39 +50,54 @@ def backup_data():
         shutil.copy2(DATA_FILE, BACKUP_FILE)
 
 def load_memos():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            # JSON 损坏，加载备份
-            print(f"数据文件损坏: {e}")
-            if os.path.exists(BACKUP_FILE):
-                try:
-                    with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
-                        return json.load(f)
-                except (json.JSONDecodeError, IOError):
-                    print(f"备份文件也损坏")
-    return []
+    if not os.path.exists(DATA_FILE):
+        return []
+    try:
+        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        logger.error(f"数据文件损坏: {e}")
+        if os.path.exists(BACKUP_FILE):
+            try:
+                with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                logger.info("已从备份文件恢复数据")
+                return data
+            except (json.JSONDecodeError, IOError) as be:
+                logger.error(f"备份文件也损坏: {be}")
+        raise RuntimeError(
+            "数据文件和备份文件均已损坏，无法恢复数据。"
+            "请手动检查 memos.json 和 memos.json.bak"
+        )
 
 def save_memos(memos):
-    # 先备份
+    if not isinstance(memos, list):
+        raise TypeError("memos 必须是列表类型")
     backup_data()
-    # 跨平台文件锁
     try:
         with portalocker.Lock(LOCK_FILE, 'w', timeout=5) as lock_fd:
             with open(DATA_FILE, 'w', encoding='utf-8') as f:
                 json.dump(memos, f, ensure_ascii=False, indent=2)
     except portalocker.LockException as e:
-        print(f"保存文件失败: {e}")
+        logger.error(f"保存文件失败: {e}")
         raise
 
 @app.route('/')
+def validate_memo_input(title, content):
+    if not title or not content:
+        return '标题和内容都不能为空！'
+    if len(title) > MAX_TITLE:
+        return f'标题不能超过{MAX_TITLE}字符！'
+    if len(content) > MAX_CONTENT:
+        return f'内容不能超过{MAX_CONTENT}字符！'
+    return None
+
 def index():
     memos = load_memos()
 
-    # 置顶的放最前面
-    memos = sorted(memos, key=lambda m: (not m.get('pinned', False), m.get('created_at', '')), reverse=True)
+    # 置顶的放最前面，同类型按时间倒序（新的在前）
+    memos = sorted(memos, key=lambda m: m.get('created_at', ''), reverse=True)
+    memos = sorted(memos, key=lambda m: not m.get('pinned', False))
 
     # 搜索
     q = request.args.get('q', '').strip()
@@ -116,18 +131,11 @@ def add_memo():
     title = request.form.get('title', '').strip()
     content = request.form.get('content', '').strip()
 
-    if not title or not content:
-        flash('标题和内容都不能为空！')
+    error = validate_memo_input(title, content)
+    if error:
+        flash(error)
         return redirect(url_for('index'))
 
-    if len(title) > MAX_TITLE:
-        flash(f'标题不能超过{MAX_TITLE}字符！')
-        return redirect(url_for('index'))
-
-    if len(content) > MAX_CONTENT:
-        flash(f'内容不能超过{MAX_CONTENT}字符！')
-        return redirect(url_for('index'))
-    
     tags_raw = request.form.get('tags', '').strip()
     tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
 
@@ -141,7 +149,7 @@ def add_memo():
         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
-    
+
     memos.insert(0, new_memo)
     save_memos(memos)
     flash('备忘录添加成功！')
@@ -162,23 +170,16 @@ def edit_memo(memo_id):
         tags_raw = request.form.get('tags', '').strip()
         tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
 
-        if not title or not content:
-            flash('标题和内容都不能为空！')
-            return redirect(url_for('edit_memo', memo_id=memo_id))
-
-        if len(title) > MAX_TITLE:
-            flash(f'标题不能超过{MAX_TITLE}字符！')
-            return redirect(url_for('edit_memo', memo_id=memo_id))
-
-        if len(content) > MAX_CONTENT:
-            flash(f'内容不能超过{MAX_CONTENT}字符！')
+        error = validate_memo_input(title, content)
+        if error:
+            flash(error)
             return redirect(url_for('edit_memo', memo_id=memo_id))
 
         memo['title'] = title
         memo['content'] = content
         memo['tags'] = tags
         memo['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
+
         save_memos(memos)
         flash('备忘录更新成功！')
         return redirect(url_for('index'))
