@@ -49,8 +49,26 @@ def backup_data():
     if os.path.exists(DATA_FILE):
         shutil.copy2(DATA_FILE, BACKUP_FILE)
 
+def validate_memo_input(title, content):
+    if not title or not content:
+        return '标题和内容都不能为空！'
+    if len(title) > MAX_TITLE:
+        return f'标题不能超过{MAX_TITLE}字符！'
+    if len(content) > MAX_CONTENT:
+        return f'内容不能超过{MAX_CONTENT}字符！'
+    return None
+
 def load_memos():
+    # 优先加载主数据文件，不存在则尝试备份
     if not os.path.exists(DATA_FILE):
+        if os.path.exists(BACKUP_FILE):
+            try:
+                with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                logger.info("数据文件不存在，从备份恢复")
+                return data
+            except (json.JSONDecodeError, IOError):
+                pass
         return []
     try:
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
@@ -83,15 +101,6 @@ def save_memos(memos):
         raise
 
 @app.route('/')
-def validate_memo_input(title, content):
-    if not title or not content:
-        return '标题和内容都不能为空！'
-    if len(title) > MAX_TITLE:
-        return f'标题不能超过{MAX_TITLE}字符！'
-    if len(content) > MAX_CONTENT:
-        return f'内容不能超过{MAX_CONTENT}字符！'
-    return None
-
 def index():
     memos = load_memos()
 
