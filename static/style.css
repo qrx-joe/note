@@ -76,14 +76,14 @@ body {
 }
 
 .logo-icon {
-    width: 26px;
-    height: 26px;
+    width: 34px;
+    height: 34px;
     flex-shrink: 0;
 }
 
 .logo-text {
     font-family: var(--font-heading);
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.02em;
