@@ -76,10 +76,8 @@ body {
 }
 
 .logo-icon {
-    width: 28px;
-    height: 28px;
-    background: var(--accent);
-    border-radius: 8px;
+    width: 26px;
+    height: 26px;
     flex-shrink: 0;
 }
 
