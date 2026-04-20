@@ -346,7 +346,10 @@ body {
     flex: 1;
     overflow-y: auto;
     background: var(--bg-base);
-    padding: 40px 48px;
+    padding: 40px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .main-content::-webkit-scrollbar { width: 6px; }
@@ -357,7 +360,7 @@ body {
 }
 
 /* Flash Messages */
-.flash-messages { margin-bottom: 24px; }
+.flash-messages { margin-bottom: 24px; width: 100%; max-width: 860px; }
 
 .flash-message {
     background: var(--bg-surface);
@@ -380,7 +383,8 @@ body {
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
     padding: 32px 36px;
-    max-width: 720px;
+    width: 100%;
+    max-width: 860px;
     margin-bottom: 32px;
 }
 
@@ -581,6 +585,8 @@ body {
     padding: 60px 20px;
     margin-bottom: 32px;
     text-align: center;
+    width: 100%;
+    max-width: 860px;
 }
 
 .empty-icon {
