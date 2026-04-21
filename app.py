@@ -1,12 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from flask_wtf.csrf import CSRFProtect
 import json
-import os
-import uuid
-import shutil
-import portalocker
 import logging
+import os
+import shutil
+import uuid
 from datetime import datetime
+
+import portalocker
+from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
+from flask_wtf.csrf import CSRFProtect
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,31 +61,35 @@ def load_memos():
     if not os.path.exists(DATA_FILE):
         if os.path.exists(BACKUP_FILE):
             try:
-                with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
+                with open(BACKUP_FILE, encoding='utf-8') as f:
                     data = json.load(f)
                 logger.info("数据文件不存在，从备份恢复")
                 return data
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 pass
         return []
 
     try:
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+        with open(DATA_FILE, encoding='utf-8') as f:
             return json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         logger.error(f"数据文件损坏: {e}")
         if os.path.exists(BACKUP_FILE):
             try:
-                with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
+                with open(BACKUP_FILE, encoding='utf-8') as f:
                     data = json.load(f)
                 logger.info("已从备份文件恢复数据")
                 return data
-            except (json.JSONDecodeError, IOError) as be:
+            except (OSError, json.JSONDecodeError) as be:
                 logger.error(f"备份文件也损坏: {be}")
+                raise RuntimeError(
+                    "数据文件和备份文件均已损坏，无法恢复数据。"
+                    "请手动检查 memos.json 和 memos.json.bak"
+                ) from be
         raise RuntimeError(
             "数据文件和备份文件均已损坏，无法恢复数据。"
             "请手动检查 memos.json 和 memos.json.bak"
-        )
+        ) from e
 
 
 def save_memos(memos):
@@ -92,9 +97,8 @@ def save_memos(memos):
         raise TypeError("memos 必须是列表类型")
     backup_data()
     try:
-        with portalocker.Lock(LOCK_FILE, 'w', timeout=5) as lock_fd:
-            with open(DATA_FILE, 'w', encoding='utf-8') as f:
-                json.dump(memos, f, ensure_ascii=False, indent=2)
+        with portalocker.Lock(LOCK_FILE, 'w', timeout=5), open(DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(memos, f, ensure_ascii=False, indent=2)
     except portalocker.LockException as e:
         logger.error(f"保存文件失败: {e}")
         raise

@@ -1,9 +1,10 @@
 import json
 import os
 import tempfile
+
 import pytest
 
-from app import app, validate_memo_input, sorted_memos, filter_memos, get_all_tags
+from app import app, filter_memos, get_all_tags, sorted_memos, validate_memo_input
 
 
 @pytest.fixture
@@ -107,7 +108,7 @@ class TestRoutes:
     def test_index_page(self, client):
         response = client.get("/")
         assert response.status_code == 200
-        assert "我的备忘录".encode("utf-8") in response.data
+        assert "我的备忘录".encode() in response.data
 
     def test_health_check(self, client):
         response = client.get("/health")
