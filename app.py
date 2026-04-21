@@ -28,8 +28,8 @@ if os.path.exists(SECRET_KEY_FILE):
         app.secret_key = f.read()
 else:
     app.secret_key = os.urandom(32)
-    with open(SECRET_KEY_FILE, 'wb') as f:
-        f.write(app.secret_key)
+    with open(SECRET_KEY_FILE, 'wb') as fw:
+        fw.write(app.secret_key)
 
 csrf = CSRFProtect(app)
 

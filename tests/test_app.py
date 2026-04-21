@@ -107,7 +107,7 @@ class TestRoutes:
     def test_index_page(self, client):
         response = client.get("/")
         assert response.status_code == 200
-        assert b"我的备忘录" in response.data
+        assert "我的备忘录".encode("utf-8") in response.data
 
     def test_health_check(self, client):
         response = client.get("/health")
