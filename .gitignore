@@ -60,3 +60,10 @@ coverage/
 memos.lock
 memos.json
 nul
+
+# Tool reports
+.coverage
+bandit-report.json
+
+# Claude Code
+.claude/
