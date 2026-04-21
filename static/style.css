@@ -4,10 +4,10 @@
 :root {
     --bg-base: #F5F6F8;
     --bg-surface: #FFFFFF;
-    --accent: #4F8EF7;
-    --accent-hover: #3A7AE8;
-    --accent-light: #EEF4FF;
-    --accent-border: #C7DCFF;
+    --accent: #FF8A65;
+    --accent-hover: #FF7A50;
+    --accent-light: #FFF4F0;
+    --accent-border: #FFD4C4;
     --text-primary: #1A1D23;
     --text-secondary: #6B7280;
     --text-muted: #9CA3AF;
@@ -112,7 +112,7 @@ body {
 .btn-new-note:hover {
     background: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(79, 142, 247, 0.35);
+    box-shadow: 0 4px 12px rgba(255, 138, 101, 0.35);
 }
 
 /* 搜索 */
@@ -559,7 +559,7 @@ body {
 .btn-primary:hover {
     background: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(79, 142, 247, 0.35);
+    box-shadow: 0 4px 12px rgba(255, 138, 101, 0.35);
 }
 
 .btn-secondary {
