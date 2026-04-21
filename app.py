@@ -20,7 +20,7 @@ app = Flask(__name__)
 
 app.debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
 
-SECRET_KEY_FILE = ".secret_key"
+SECRET_KEY_FILE = ".secret_key"  # nosec: B105
 if os.path.exists(SECRET_KEY_FILE):
     with open(SECRET_KEY_FILE, "rb") as f:
         app.secret_key = f.read()
