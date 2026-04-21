@@ -4,7 +4,13 @@
       "Bash(uv venv:*)",
       "Bash(mkdir:*)",
       "Bash(cmd *)",
-      "Bash(netstat -ano)"
+      "Bash(netstat -ano)",
+      "Bash(ruff --version)",
+      "Bash(.venv/Scripts/ruff --version)",
+      "Bash(.venv/Scripts/python.exe *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ],
     "deny": []
   }
